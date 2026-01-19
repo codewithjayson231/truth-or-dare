@@ -1,1 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 Truth or Dare - Multiplayer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        :root {
+            --bg-primary: #0f0a1f;
+            --bg-secondary: #1a1230;
+            --bg-card: #251b3d;
+            --accent: #a855f7;
+            --accent-secondary: #ec4899;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 20% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Floating emojis background */
+        .bg-emojis {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-emoji {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: floatEmoji 20s infinite linear;
+        }
+
+        @keyframes floatEmoji {
+            0% { transform: translateY(100vh) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            font-size: 80px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input:focus {
+            border-color: var(--accent);
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .input.code {
+            text-transform: uppercase;
+            text-align: center;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+        }
+
+        /* Mode selector */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .mode-btn:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .mode-btn.active {
+            border-color: var(--accent);
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--text-primary);
+        }
+
+        .mode-btn.clean.active { border-color: var(--success); background: rgba(34, 197, 94, 0.2); }
+        .mode-btn.friends.active { border-color: var(--warning); background: rgba(245, 158, 11, 0.2); }
+        .mode-btn.party.active { border-color: var(--danger); background: rgba(239, 68, 68, 0.2); }
+
+        .mode-emoji {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px 32px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .divider {
+            text-align: center;
+            color: var(--text-secondary);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+        }
+
+        .feature-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .logo h1 { font-size: 2rem; }
+            .card { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-emojis" id="bgEmojis"></div>
+
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">🎲</div>
+            <h1>Truth or Dare</h1>
+            <p>Play with friends online!</p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">🎮 Create Game</h2>
+            
+            <div class="error-message" id="createError"></div>
+
+            <div class="input-group">
+                <label>Your Name</label>
+                <input type="text" class="input" id="createName" placeholder="Enter your name" maxlength="20">
+            </div>
+
+            <div class="input-group">
+                <label>Game Mode</label>
+                <div class="mode-selector">
+                    <button class="mode-btn clean" data-mode="clean">
+                        <span class="mode-emoji">🟢</span>
+                        Clean
+                    </button>
+                    <button class="mode-btn friends active" data-mode="friends">
+                        <span class="mode-emoji">🟡</span>
+                        Friends
+                    </button>
+                    <button class="mode-btn party" data-mode="party">
+                        <span class="mode-emoji">🔴</span>
+                        Party 18+
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="createBtn">
+                Create Room 🚀
+            </button>
+        </div>
+
+        <div class="divider">or</div>
+
+        <div class="card">
+            <h2 class="card-title">🎯 Join Game</h2>
+            
+            <div class="error-message" id="joinError"></div>
+
+            <div class="input-group">
+                <label>Your Name</label>
+                <input type="text" class="input" id="joinName" placeholder="Enter your name" maxlength="20">
+            </div>
+
+            <div class="input-group">
+                <label>Room Code</label>
+                <input type="text" class="input code" id="roomCode" placeholder="ABC123" maxlength="6">
+            </div>
+
+            <button class="btn btn-secondary" id="joinBtn">
+                Join Room 🎯
+            </button>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎡</div>
+                <div class="feature-text">Spin the Bottle</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⏱️</div>
+                <div class="feature-text">Timer & Skips</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏆</div>
+                <div class="feature-text">Points & Ranks</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <div class="feature-text">Live Chat</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        let selectedMode = 'friends';
+
+        // Floating emojis background
+        const emojis = ['🎲', '🎯', '🎪', '✨', '🔥', '💫', '⭐', '🎭', '🃏', '🎪'];
+        const bgContainer = document.getElementById('bgEmojis');
+        for (let i = 0; i < 15; i++) {
+            const emoji = document.createElement('div');
+            emoji.className = 'bg-emoji';
+            emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.style.left = Math.random() * 100 + '%';
+            emoji.style.animationDelay = Math.random() * 20 + 's';
+            emoji.style.animationDuration = (15 + Math.random() * 10) + 's';
+            bgContainer.appendChild(emoji);
+        }
+
+        // Mode selection
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMode = btn.dataset.mode;
+            });
+        });
+
+        // Create room
+        document.getElementById('createBtn').addEventListener('click', () => {
+            const name = document.getElementById('createName').value.trim();
+            if (!name) {
+                showError('createError', 'Please enter your name');
+                return;
+            }
+            socket.emit('createRoom', { playerName: name, mode: selectedMode });
+        });
+
+        // Join room
+        document.getElementById('joinBtn').addEventListener('click', () => {
+            const name = document.getElementById('joinName').value.trim();
+            const code = document.getElementById('roomCode').value.trim().toUpperCase();
+            
+            if (!name) {
+                showError('joinError', 'Please enter your name');
+                return;
+            }
+            if (!code || code.length < 4) {
+                showError('joinError', 'Please enter a valid room code');
+                return;
+            }
+            
+            socket.emit('joinRoom', { playerName: name, roomCode: code });
+        });
+
+        // Enter key support
+        document.getElementById('roomCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('joinBtn').click();
+        });
+
+        document.getElementById('createName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('createBtn').click();
+        });
+
+        // Socket events
+        socket.on('roomCreated', ({ roomCode }) => {
+            const name = document.getElementById('createName').value.trim();
+            sessionStorage.setItem('playerName', name);
+            window.location.href = `/game/${roomCode}`;
+        });
+
+        socket.on('joinedRoom', ({ room }) => {
+            const name = document.getElementById('joinName').value.trim();
+            sessionStorage.setItem('playerName', name);
+            window.location.href = `/game/${room.code}`;
+        });
+
+        socket.on('error', ({ message }) => {
+            showError('joinError', message);
+        });
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = '❌ ' + message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
